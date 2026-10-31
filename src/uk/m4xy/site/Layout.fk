@@ -1,3 +1,4 @@
+import uk.m4xy.html.Markup
 import uk.m4xy.site.Pages
 import uk.m4xy.site.Highlights
 import uk.m4xy.html.Htmls
@@ -39,10 +40,25 @@ module Layout {
               }
             }
             mainElement { raw(Htmls.render(Markdowns.htmlWith(shown.blocks) { l, c -> Highlights.highlighted(l, c) })) }
+            contents(shown)
           }
         }
       }
     }
+  }
+
+  // The page's headings, under its title, as a list of links to them, if it has two or more.
+  @Markup private contents(shown: Page): Unit = {
+    headings = Markdowns.headings(shown.blocks).filter { level, _, _ -> level == 2 || level == 3 }
+    if (headings.size >= 2) aside {
+      p([classes(["contents"])]) { text("On this page") }
+      ul {
+        headings.forEach { level, title, slug ->
+          li(if (level == 3) [classes(["deeper"])] else []) { a("#$slug") { text(title) } }
+        }
+      }
+    }
+    else Unit
   }
 
   private css: String = """
@@ -62,13 +78,19 @@ module Layout {
 body { margin: 0; font: 16px/1.6 system-ui, sans-serif; color: var(--text); background: var(--back); }
 header { padding: 14px 24px; border-bottom: 1px solid var(--line); }
 header .site { font-weight: 600; color: var(--text); text-decoration: none; }
-.layout { display: flex; max-width: 1100px; margin: 0 auto; }
+.layout { display: flex; max-width: 1300px; margin: 0 auto; }
 nav { width: 220px; flex-shrink: 0; padding: 24px; border-right: 1px solid var(--line); }
 nav ul { list-style: none; margin: 0; padding: 0; }
 nav li { margin: 4px 0; }
 nav a { color: var(--muted); text-decoration: none; }
 nav a[aria-current] { color: var(--text); font-weight: 600; }
 main { flex: 1; min-width: 0; padding: 8px 40px 48px; }
+aside { width: 200px; flex-shrink: 0; padding: 24px 16px; font-size: 14px; position: sticky; top: 0; align-self: flex-start; }
+aside .contents { margin: 0 0 8px; font-weight: 600; }
+aside ul { list-style: none; margin: 0; padding: 0; }
+aside li { margin: 4px 0; }
+aside li.deeper { padding-left: 12px; }
+aside a { color: var(--muted); text-decoration: none; }
 a { color: var(--link); }
 code { font: 0.9em ui-monospace, monospace; background: var(--code); padding: 1px 4px; border-radius: 4px; }
 pre { background: var(--code); padding: 14px 16px; border-radius: 8px; overflow-x: auto; }
@@ -81,6 +103,7 @@ img { max-width: 100%; }
   .layout { display: block; }
   nav { width: auto; border-right: none; border-bottom: 1px solid var(--line); }
   main { padding: 8px 16px 32px; }
+  aside { display: none; }
 }
 """
 }

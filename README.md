@@ -1,7 +1,7 @@
 # fk-site
 
-A website made of a folder of Markdown: a page of each file, with every page listed beside it, and
-every other file, as images, copied as it is.
+A website made of a folder of Markdown: a page of each file, with every page listed beside it and
+its own headings on the other side, and every other file, as images, copied as it is.
 
 ```sh
 fk-site --title "My project" --out site docs
