@@ -6,10 +6,10 @@ project = Project(
   group = "uk.m4xy",
   version = "0.1.0",
   dependencies = [
-    library("uk.m4xy:fk-markdown:0.1.0"),
-    library("uk.m4xy:fk-html:0.1.0"),
-    library("uk.m4xy:fk-cli:0.1.0"),
-    library("uk.m4xy:fk-http:0.1.0"),
+    library("uk.m4xy:fk-markdown:0.1.0", git = "https://github.com/m4xy/fk-markdown", ref = "main"),
+    library("uk.m4xy:fk-html:0.1.0", git = "https://github.com/m4xy/fk-html", ref = "main"),
+    library("uk.m4xy:fk-cli:0.1.0", git = "https://github.com/m4xy/fk-cli", ref = "main"),
+    library("uk.m4xy:fk-http:0.1.0", git = "https://github.com/m4xy/fk-http", ref = "main"),
   ],
 )
 
