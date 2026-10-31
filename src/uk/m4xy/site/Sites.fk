@@ -23,6 +23,10 @@ module Sites {
     pages
   }
 
+  // When source's files last changed: the newest's time, in milliseconds since 1970, or 0.
+  @FileSystem changedAt(source: Path): Int =
+    Sites.filesOf(source).map { source.resolve(it).lastModified().millis }.maxOrNone().getOrElse(0)
+
   // The files in folder and those in it, from folder, as guide/start.md.
   @FileSystem internal filesOf(folder: Path): List<String> = filesIn(folder, "", None)
 

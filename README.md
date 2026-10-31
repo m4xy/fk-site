@@ -19,7 +19,8 @@ strings, numbers, comments and annotations. Links are written from where each pa
 or opened from its folder.
 
 `--serve` serves the site once it's made, with fk-http: each file at its path, read each time it's
-asked for, so the site can be made again while it's served.
+asked for. When a page is asked for and a source file has changed since the site was made, it's
+made again first, so editing a page and reloading it in the browser shows the change.
 
 It's fk-markdown, fk-html, fk-cli and fk-http together: `Pages` reads a page, `Layout` writes it, with the
 site's navigation and a stylesheet of its own, light or dark as the reader's system is, and `Sites`
