@@ -1,0 +1,9 @@
+# What kiln fetched from git, at the commit it fetched: kiln update fetches the newest.
+uk.m4xy:fk-cli:0.1.0 https://github.com/m4xy/fk-cli main e82bb36572ca4af8b72a8eb69237470d40f44edd
+uk.m4xy:fk-html:0.1.0 https://github.com/m4xy/fk-html main 0e931da3188f29ce089fbd1ea7be43c14a21a245
+uk.m4xy:fk-http:0.1.0 https://github.com/m4xy/fk-http main a0c7a9e0e12580e627e95610f00f77b1b3ad4fea
+uk.m4xy:fk-markdown:0.1.0 https://github.com/m4xy/fk-markdown main 62d62c70b8a34586ae5a0a451e3015371a07a287
+uk.m4xy:fk-serialization:0.1.0 https://github.com/m4xy/fk-serialization main 864f678b57cc38b6b06708e675f9b922938dc3ab
+uk.m4xy:fk-tests-kiln:0.1.0 https://github.com/m4xy/fk-tests main 7a145dcc26e4f7909e31ca78ea751fd265715345
+uk.m4xy:fk-tests-runner:0.1.0 https://github.com/m4xy/fk-tests main 7a145dcc26e4f7909e31ca78ea751fd265715345
+uk.m4xy:fk-tests:0.1.0 https://github.com/m4xy/fk-tests main 7a145dcc26e4f7909e31ca78ea751fd265715345
