@@ -23,6 +23,9 @@ module Sites {
     pages
   }
 
+  // The files in folder and those in it, from folder, as guide/start.md.
+  @FileSystem internal filesOf(folder: Path): List<String> = filesIn(folder, "", None)
+
   // The files in folder and those in it, from folder, as guide/start.md; but out's, if it's in it.
   @FileSystem private filesIn(folder: Path, prefix: String, out: Option<Path>): List<String> =
     folder.listFiles().filter { !it.name.startsWith(".") && Some(it.canonical()) != out }.flatMap { f ->

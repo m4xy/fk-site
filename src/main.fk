@@ -1,10 +1,16 @@
 import fckt.io.Console
 import fckt.io.Paths.*
 import uk.m4xy.cli.Cli
+import uk.m4xy.http.server.Server
 import uk.m4xy.site.SiteCommand
+import uk.m4xy.site.Serving
 import uk.m4xy.site.Sites
 
 main(args: List<String>) = Cli.run(SiteCommand.command, args) { options ->
   pages = Sites.build(path(options.source), path(options.out), options.title)
   println("  made ${pages.size} pages in ${options.out}")
+  options.serve.forEach { port ->
+    println("  serving it on http://localhost:$port/")
+    Server.serve(port, Serving.routes(path(options.out)))
+  }
 }

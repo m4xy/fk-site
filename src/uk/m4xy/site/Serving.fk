@@ -1,0 +1,42 @@
+import fckt.io.Path
+import fckt.io.FileSystem
+import fckt.io.Paths.*
+import fckt.io.Files.*
+import uk.m4xy.http.*
+import uk.m4xy.http.Statuses.*
+import uk.m4xy.http.server.*
+import uk.m4xy.site.Sites
+
+// A site made, served: a route for each of its files, read each time it's asked for, so the site
+// can be made again as it's served; and / for its index.
+module Serving {
+  @FileSystem routes(out: Path): List<Route<@FileSystem>> = Sites.filesOf(out).flatMap { file ->
+    respond = (_: Call) -> Response(
+      ok,
+      [Header("Content-Type", typeOf(file))],
+      out.resolve(file).readBytes(),
+    )
+    paths = ["/$file"] + (if (file == "index.html") ["/"] else [])
+    paths.map { Route(Get, it, respond) }
+  }
+
+  // What a file is, by its name's extension, as a response says.
+  typeOf(file: String): String = when (file.substringAfterLast(".").lowercase()) {
+    "html" -> "text/html; charset=utf-8"
+    "css" -> "text/css; charset=utf-8"
+    "js" -> "text/javascript; charset=utf-8"
+    "json" -> "application/json"
+    "svg" -> "image/svg+xml"
+    "png" -> "image/png"
+    "jpg" -> "image/jpeg"
+    "jpeg" -> "image/jpeg"
+    "gif" -> "image/gif"
+    "webp" -> "image/webp"
+    "ico" -> "image/x-icon"
+    "woff2" -> "font/woff2"
+    "txt" -> "text/plain; charset=utf-8"
+    "md" -> "text/markdown; charset=utf-8"
+    "wasm" -> "application/wasm"
+    else -> "application/octet-stream"
+  }
+}

@@ -66,3 +66,19 @@ import uk.m4xy.site.*
 
 expectContains(text: String, part: String): Unit =
   if (!text.contains(part)) error("expected to find:\n$part\nin:\n$text")
+
+// A site made is served: a route for each file, and / for its index, each of its type.
+@Test @FileSystem aSiteIsServed() = {
+  out = path("build/test-serve")
+  out.delete()
+  out.resolve("guide").makeDirs()
+  out.resolve("index.html").writeText("<p>home</p>")
+  out.resolve("guide/start.html").writeText("<p>start</p>")
+  assertEquals(
+    ["/guide/start.html", "/index.html", "/"],
+    Serving.routes(out).map { it.path }.sortedBy { if (it == "/") "~" else it },
+  )
+  assertEquals("text/html; charset=utf-8", Serving.typeOf("a/b.HTML"))
+  assertEquals("image/svg+xml", Serving.typeOf("logo.svg"))
+  assertEquals("application/octet-stream", Serving.typeOf("data.bin"))
+}

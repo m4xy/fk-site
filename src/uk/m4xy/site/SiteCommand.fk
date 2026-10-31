@@ -14,8 +14,9 @@ module SiteCommand {
         "Site",
         short = Some('t'),
       )
+      serve by option("serve", "PORT", "then serve the site on PORT, as http://localhost:PORT/")
       source by argument("SOURCE", "the folder of Markdown")
-      SiteOptions(source, out, title)
+      SiteOptions(source, out, title, serve.flatMap { it.toIntOrNone() })
     },
   )
 }

@@ -9,6 +9,7 @@ project = Project(
     library("uk.m4xy:fk-markdown:0.1.0"),
     library("uk.m4xy:fk-html:0.1.0"),
     library("uk.m4xy:fk-cli:0.1.0"),
+    library("uk.m4xy:fk-http:0.1.0"),
   ],
 )
 

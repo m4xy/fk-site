@@ -1,2 +1,3 @@
-// What site is asked to do: make the site of the Markdown in source, in out, called title.
-type SiteOptions(source: String, out: String, title: String)
+// What fk-site is asked to do: make the site of the Markdown in source, in out, called title; then,
+// with a port, serve it there.
+type SiteOptions(source: String, out: String, title: String, serve: Option<Int>)
