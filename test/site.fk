@@ -1,0 +1,68 @@
+import fckt.io.FileSystem
+import fckt.io.Paths.*
+import fckt.io.Files.*
+import uk.m4xy.fktests.api.Test
+import uk.m4xy.site.*
+
+@Test frontMatterIsReadAndLeftOut() = {
+  (fields, body) = Pages.frontMatter("---\ntitle: \"Start here\"\norder: 2\n---\n# Hello\n")
+  assertEquals([("title", "Start here"), ("order", "2")], fields)
+  assertEquals("# Hello\n", body)
+  assertEquals(([], "no front matter"), Pages.frontMatter("no front matter"))
+}
+
+@Test aPagesTitle() = {
+  assertEquals("Given", Pages.of("a.md", "---\ntitle: Given\n---\n# Heading").title)
+  assertEquals("The first heading", Pages.of("a.md", "Text\n\n## The *first* heading").title)
+  assertEquals("notes", Pages.of("guide/notes.md", "No heading").title)
+}
+
+// A link goes where it means on the site, from the page it's in.
+@Test linksGoWhereTheyMean() = {
+  files = ["index.md", "guide/start.md", "guide/index.md", "types.md", "public/logo.svg", "cat.png"]
+  go = (url: String) -> Pages.resolved(url, "guide/start.md", files)
+  assertEquals("../types.html#cases", go("/types#cases"))
+  assertEquals("../types.html", go("../types.md"))
+  assertEquals("../guide/index.html", go("./"))
+  assertEquals("../index.html", go("/"))
+  assertEquals("../public/logo.svg", go("/logo.svg"))
+  assertEquals("../cat.png", go("../cat.png"))
+  assertEquals("#here", go("#here"))
+  assertEquals("https://fckt.dev/types", go("https://fckt.dev/types"))
+  assertEquals("missing.md", go("missing.md"))
+}
+
+@Test pagesAreListedInOrder() = assertEquals(
+  ["index.md", "b.md", "a.md", "c.md"],
+  Pages.ordered([
+    Pages.of("c.md", "# Cee"),
+    Pages.of("a.md", "# Ay"),
+    Pages.of("b.md", "---\norder: 1\n---\n# Bee"),
+    Pages.of("index.md", "# Home"),
+  ]).map { it.source },
+)
+
+// A site of a folder: a page of each Markdown file, with every page in its navigation, and every
+// other file copied.
+@Test @FileSystem aSiteIsMade() = {
+  source = path("build/test-site/docs")
+  out = path("build/test-site/out")
+  path("build/test-site").delete()
+  source.resolve("guide").makeDirs()
+  source.resolve("index.md").writeText("# Home\n\nRead the [guide](guide/start.md).\n")
+  source.resolve("guide/start.md").writeText("# Start\n\nBack [home](/).\n")
+  source.resolve("logo.svg").writeText("<svg/>")
+  pages = Sites.build(source, out, "Docs")
+  assertEquals(["index.md", "guide/start.md"], pages.map { it.source })
+  home = out.resolve("index.html").readText()
+  expectContains(home, "<title>Home · Docs</title>")
+  expectContains(home, """<a href="guide/start.html">guide</a>""")
+  expectContains(home, """<li><a href="index.html" aria-current="page">Home</a></li>""")
+  start = out.resolve("guide/start.html").readText()
+  expectContains(start, """<a href="../index.html">home</a>""")
+  expectContains(start, """<li><a href="../guide/start.html" aria-current="page">Start</a></li>""")
+  assertEquals("<svg/>", out.resolve("logo.svg").readText())
+}
+
+expectContains(text: String, part: String): Unit =
+  if (!text.contains(part)) error("expected to find:\n$part\nin:\n$text")

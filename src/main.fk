@@ -1,0 +1,10 @@
+import fckt.io.Console
+import fckt.io.Paths.*
+import uk.m4xy.cli.Cli
+import uk.m4xy.site.SiteCommand
+import uk.m4xy.site.Sites
+
+main(args: List<String>) = Cli.run(SiteCommand.command, args) { options ->
+  pages = Sites.build(path(options.source), path(options.out), options.title)
+  println("  made ${pages.size} pages in ${options.out}")
+}

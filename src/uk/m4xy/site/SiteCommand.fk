@@ -1,0 +1,21 @@
+import uk.m4xy.cli.*
+import uk.m4xy.cli.Arguments.*
+
+module SiteCommand {
+  command: Command<SiteOptions> = Command(
+    "fk-site",
+    "Makes a website of the Markdown in a folder: a page of each file, and every other file as it is.",
+    Arguments {
+      out by optionOr("out", "DIR", "the folder to write the site to", "site", short = Some('o'))
+      title by optionOr(
+        "title",
+        "NAME",
+        "the site's name, at the top of each page",
+        "Site",
+        short = Some('t'),
+      )
+      source by argument("SOURCE", "the folder of Markdown")
+      SiteOptions(source, out, title)
+    },
+  )
+}

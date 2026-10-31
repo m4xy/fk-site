@@ -1,0 +1,15 @@
+import uk.m4xy.kiln.fckt.Fckt
+import uk.m4xy.fktests.kiln.*
+
+project = Project(
+  name = "fk-site",
+  group = "uk.m4xy",
+  version = "0.1.0",
+  dependencies = [
+    library("uk.m4xy:fk-markdown:0.1.0"),
+    library("uk.m4xy:fk-html:0.1.0"),
+    library("uk.m4xy:fk-cli:0.1.0"),
+  ],
+)
+
+plugins = [Fckt(), FkTests()]

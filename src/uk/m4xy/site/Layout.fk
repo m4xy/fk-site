@@ -1,0 +1,77 @@
+import uk.m4xy.site.Pages
+import uk.m4xy.html.Htmls
+import uk.m4xy.html.Htmls.*
+import uk.m4xy.html.Tags.*
+import uk.m4xy.markdown.Markdowns
+
+// A page of the site as a document: the site's name, linking to its first page; every page, with
+// this one marked; then the page itself. Links are from where the page is, so the site works
+// wherever it's put, or opened from its folder.
+module Layout {
+  written(site: String, shown: Page, pages: List<Page>): String = {
+    root = Pages.rootFrom(shown.source)
+    first = pages.firstOrNone().map { Pages.outputOf(it.source) }.getOrElse("index.html")
+    page {
+      html([attribute("lang", "en")]) {
+        head {
+          meta([attribute("charset", "utf-8")])
+          meta(
+            [
+              attribute("name", "viewport"),
+              attribute("content", "width=device-width, initial-scale=1"),
+            ],
+          )
+          title { text(if (shown.title == site) site else "${shown.title} · $site") }
+          style { raw(css) }
+        }
+        body {
+          header { a(root + first, [classes(["site"])]) { text(site) } }
+          div([classes(["layout"])]) {
+            nav {
+              ul {
+                pages.forEach { p ->
+                  current = if (p.source == shown.source) [
+                    attribute("aria-current", "page"),
+                  ] else []
+                  li { a(root + Pages.outputOf(p.source), current) { text(p.title) } }
+                }
+              }
+            }
+            mainElement { raw(Htmls.render(Markdowns.html(shown.blocks))) }
+          }
+        }
+      }
+    }
+  }
+
+  private css: String = """
+:root { --text: #1d1d1f; --muted: #6e6e73; --line: #e5e5ea; --back: #ffffff; --code: #f5f5f7; --link: #0b63ce; }
+@media (prefers-color-scheme: dark) {
+  :root { --text: #f5f5f7; --muted: #a1a1a6; --line: #38383a; --back: #1c1c1e; --code: #2c2c2e; --link: #64a8ff; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 16px/1.6 system-ui, sans-serif; color: var(--text); background: var(--back); }
+header { padding: 14px 24px; border-bottom: 1px solid var(--line); }
+header .site { font-weight: 600; color: var(--text); text-decoration: none; }
+.layout { display: flex; max-width: 1100px; margin: 0 auto; }
+nav { width: 220px; flex-shrink: 0; padding: 24px; border-right: 1px solid var(--line); }
+nav ul { list-style: none; margin: 0; padding: 0; }
+nav li { margin: 4px 0; }
+nav a { color: var(--muted); text-decoration: none; }
+nav a[aria-current] { color: var(--text); font-weight: 600; }
+main { flex: 1; min-width: 0; padding: 8px 40px 48px; }
+a { color: var(--link); }
+code { font: 0.9em ui-monospace, monospace; background: var(--code); padding: 1px 4px; border-radius: 4px; }
+pre { background: var(--code); padding: 14px 16px; border-radius: 8px; overflow-x: auto; }
+pre code { padding: 0; background: none; }
+blockquote { margin: 0; padding: 0 16px; border-left: 3px solid var(--line); color: var(--muted); }
+table { border-collapse: collapse; display: block; overflow-x: auto; }
+th, td { border: 1px solid var(--line); padding: 6px 12px; }
+img { max-width: 100%; }
+@media (max-width: 720px) {
+  .layout { display: block; }
+  nav { width: auto; border-right: none; border-bottom: 1px solid var(--line); }
+  main { padding: 8px 16px 32px; }
+}
+"""
+}

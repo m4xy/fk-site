@@ -1,0 +1,5 @@
+import uk.m4xy.markdown.Block
+
+// A page of the site: where its Markdown is, from the source folder, as guide/start.md; what its
+// front matter says, as title: and order:; its title; and its blocks.
+type Page(source: String, fields: List<(String, String)>, title: String, blocks: List<Block>)

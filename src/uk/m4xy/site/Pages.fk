@@ -1,0 +1,138 @@
+import uk.m4xy.markdown.*
+
+// What a page is, from its Markdown: its front matter, between --- lines at its start, a key: value
+// a line; its title, the front matter's, its first heading's, or its file's name; where it's
+// written; and where its links go on the site.
+module Pages {
+  // The page in source, of text.
+  of(source: String, text: String): Page = {
+    (fields, body) = frontMatter(text)
+    blocks = Markdowns.parse(body)
+    Page(source, fields, titleOf(fields, blocks, source), blocks)
+  }
+
+  // The front matter's fields, and the text after it.
+  frontMatter(text: String): (List<(String, String)>, String) = when (text.lines()) {
+    ["---", *rest] -> {
+      inside = rest.takeWhile { it.trim() != "---" }
+      fields = inside.filter { it.contains(":") }.map { line ->
+        (line.substringBefore(":").trim(), unquoted(line.substringAfter(":").trim()))
+      }
+      if (inside.size == rest.size) ([], text) else (fields, rest.drop(inside.size + 1).joinToString("\n"))
+    }
+    else -> ([], text)
+  }
+
+  titleOf(fields: List<(String, String)>, blocks: List<Block>, source: String): String =
+    field(fields, "title").getOrElse(
+      blocks.mapNotNull { b ->
+        when (b) {
+          Heading(_, content) -> Some(plain(content))
+          else -> None
+        }
+      }.firstOrNone().getOrElse(nameOf(source)),
+    )
+
+  field(fields: List<(String, String)>, name: String): Option<String> =
+    fields.find { key, _ -> key == name }.map { _, value -> value }
+
+  // Where the page's HTML goes: guide/start.html for guide/start.md.
+  outputOf(source: String): String = source.removeSuffix(".md") + ".html"
+
+  // The way from the page at source to the site's root: ../ for each folder it's in.
+  rootFrom(source: String): String = "../".repeat(source.split("/").size - 1)
+
+  // The pages in the order the site lists them: an index first, then by order:, then by title.
+  ordered(pages: List<Page>): List<Page> = pages.sortedBy { p ->
+    isIndex = p.source == "index.md" || p.source == "README.md"
+    rank = field(p.fields, "order").flatMap { it.toIntOrNone() }.getOrElse(1000000)
+    "${if (isIndex) 0 else 1}-${rank.toString().padStart(8, '0')}-${p.title.lowercase()}"
+  }
+
+  // The page, its links and images to where they go on the site, of files.
+  linked(page: Page, files: List<String>): Page =
+    page.copy(blocks = page.blocks.map { linkedIn(it, (url) -> resolved(url, page.source, files)) })
+
+  // Where url, in the page at from, goes on the site of files: a page, by its Markdown, or by its
+  // path without .md, from the site's root, as /guide/start, or from the page, is its HTML, from the
+  // page; a file from the site's root, there or in public, as VitePress serves it, is that file;
+  // anything else, a URL elsewhere among them, as it is.
+  resolved(url: String, from: String, files: List<String>): String = {
+    target = url.substringBefore("#")
+    anchor = if (url.contains("#")) "#" + url.substringAfter("#") else ""
+    rooted = target.startsWith("/")
+    path = normalized(if (rooted) target.drop(1) else folderOf(from) + target)
+    folder = path.removeSuffix("/")
+    pages = [path, "$path.md", if (folder.isEmpty()) "index.md" else "$folder/index.md"]
+    page = pages.find { it.endsWith(".md") && files.contains(it) }
+    other = [path, "public/$path"].find { files.contains(it) }
+    if (url.contains("://") || url.startsWith("mailto:") || target.isEmpty()) url
+    else when (page) {
+      Some(found) -> rootFrom(from) + outputOf(found) + anchor
+      None -> when (other) {
+        Some(file) -> rootFrom(from) + file + anchor
+        None -> url
+      }
+    }
+  }
+
+  private folderOf(source: String): String =
+    if (source.contains("/")) source.substringBeforeLast("/") + "/" else ""
+
+  // The path with its . and .. folders gone: guide/../start for start.
+  private normalized(path: String): String = path.split("/").fold(noParts) { done, part ->
+    if (part == "." || (part.isEmpty() && done.isNotEmpty())) done
+    else if (part == "..") done.dropLast(1)
+    else done + [part]
+  }.joinToString("/") + (if (path.endsWith("/") && path.length > 1) "/" else "")
+
+  private noParts: List<String> = []
+
+  private linkedIn(b: Block, go: (String) -> String): Block = when (b) {
+    Heading(level, content) -> Heading(level, inlinesIn(content, go))
+    Paragraph(content) -> Paragraph(inlinesIn(content, go))
+    Quote(blocks) -> Quote(blocks.map { linkedIn(it, go) })
+    BulletList(items, tight) -> BulletList(items.map { it.map { b -> linkedIn(b, go) } }, tight)
+    NumberedList(start, items, tight) ->
+      NumberedList(start, items.map { it.map { b -> linkedIn(b, go) } }, tight)
+    Table(alignments, header, rows) -> Table(
+      alignments,
+      header.map { inlinesIn(it, go) },
+      rows.map { row -> row.map { inlinesIn(it, go) } },
+    )
+    other -> other
+  }
+
+  private inlinesIn(
+    content: List<Inline>,
+    go: (String) -> String,
+  ): List<Inline> = content.map { i ->
+    when (i) {
+      Link(inner, url, title) -> Link(inlinesIn(inner, go), go(url), title)
+      Image(alt, url, title) -> Image(alt, go(url), title)
+      Emphasis(inner) -> Emphasis(inlinesIn(inner, go))
+      Strong(inner) -> Strong(inlinesIn(inner, go))
+      other -> other
+    }
+  }
+
+  private unquoted(value: String): String =
+    if (value.length >= 2 && value.startsWith("\"") && value.endsWith("\"")) value.drop(1).dropLast(
+      1,
+    )
+    else value
+
+  private nameOf(source: String): String = source.substringAfterLast("/").removeSuffix(".md")
+
+  private plain(content: List<Inline>): String = content.map { i ->
+    when (i) {
+      Plain(text) -> text
+      Emphasis(inner) -> plain(inner)
+      Strong(inner) -> plain(inner)
+      CodeSpan(code) -> code
+      Link(inner, _, _) -> plain(inner)
+      Image(alt, _, _) -> alt
+      LineBreak -> " "
+    }
+  }.joinToString("")
+}

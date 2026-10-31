@@ -1,0 +1,36 @@
+import uk.m4xy.site.Pages
+import uk.m4xy.site.Layout
+import fckt.io.Path
+import fckt.io.FileSystem
+import fckt.io.Paths.*
+import fckt.io.Files.*
+
+// A site, made of a folder: a page of each Markdown file, and every other file as it is, in the
+// same places, but those whose names start with a dot.
+module Sites {
+  // The site in source, written to out: the pages, in the order the site lists them.
+  @FileSystem build(source: Path, out: Path, site: String): List<Page> = {
+    files = filesIn(source, "", if (out.exists()) Some(out.canonical()) else None)
+    pages = Pages.ordered(files.filter { it.endsWith(".md") }.map { file ->
+      Pages.linked(Pages.of(file, source.resolve(file).readText()), files)
+    })
+    pages.forEach { p -> written(out.resolve(Pages.outputOf(p.source)), Layout.written(site, p, pages)) }
+    files.filter { !it.endsWith(".md") }.forEach { file ->
+      target = out.resolve(file)
+      target.parent.forEach { it.makeDirs() }
+      source.resolve(file).copyTo(target)
+    }
+    pages
+  }
+
+  // The files in folder and those in it, from folder, as guide/start.md; but out's, if it's in it.
+  @FileSystem private filesIn(folder: Path, prefix: String, out: Option<Path>): List<String> =
+    folder.listFiles().filter { !it.name.startsWith(".") && Some(it.canonical()) != out }.flatMap { f ->
+      if (f.isDirectory()) filesIn(f, "$prefix${f.name}/", out) else ["$prefix${f.name}"]
+    }
+
+  @FileSystem private written(file: Path, text: String): Unit = {
+    file.parent.forEach { it.makeDirs() }
+    file.writeText(text)
+  }
+}
