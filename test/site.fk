@@ -82,3 +82,24 @@ expectContains(text: String, part: String): Unit =
   assertEquals("image/svg+xml", Serving.typeOf("logo.svg"))
   assertEquals("application/octet-stream", Serving.typeOf("data.bin"))
 }
+
+// fckt's code is coloured, each piece by what it is; another language's isn't.
+@Test codeIsHighlighted() = {
+  html = Highlights.highlighted(
+    Some("fckt"),
+    "@Test greet(name: String): Unit = // hi\n  println(\"hi \$name\", 42)",
+  )
+  assertEquals(
+    """<span class="annotation">@Test</span> greet(name: <span class="type">String</span>): <span class="type">Unit</span> = <span class="comment">// hi</span>
+  println(<span class="string">"hi ${'$'}name"</span>, <span class="number">42</span>)""",
+    html.map { uk.m4xy.html.Htmls.render(it) }.getOrElse(""),
+  )
+  assertEquals(None, Highlights.highlighted(Some("sh"), "ls"))
+  assertEquals(
+    """<span class="keyword">type</span> <span class="type">Money</span>(cents: <span class="type">Int</span>)""",
+    Highlights.highlighted(
+      Some("fckt"),
+      "type Money(cents: Int)",
+    ).map { uk.m4xy.html.Htmls.render(it) }.getOrElse(""),
+  )
+}

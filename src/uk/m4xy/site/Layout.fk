@@ -1,4 +1,5 @@
 import uk.m4xy.site.Pages
+import uk.m4xy.site.Highlights
 import uk.m4xy.html.Htmls
 import uk.m4xy.html.Htmls.*
 import uk.m4xy.html.Tags.*
@@ -37,7 +38,7 @@ module Layout {
                 }
               }
             }
-            mainElement { raw(Htmls.render(Markdowns.html(shown.blocks))) }
+            mainElement { raw(Htmls.render(Markdowns.htmlWith(shown.blocks) { l, c -> Highlights.highlighted(l, c) })) }
           }
         }
       }
@@ -45,10 +46,18 @@ module Layout {
   }
 
   private css: String = """
-:root { --text: #1d1d1f; --muted: #6e6e73; --line: #e5e5ea; --back: #ffffff; --code: #f5f5f7; --link: #0b63ce; }
+:root { --text: #1d1d1f; --muted: #6e6e73; --line: #e5e5ea; --back: #ffffff; --code: #f5f5f7; --link: #0b63ce;
+  --keyword: #ad3da4; --type: #3e6d85; --string: #c41a16; --number: #1c00cf; --comment: #707f8c; --annotation: #78492a; }
 @media (prefers-color-scheme: dark) {
-  :root { --text: #f5f5f7; --muted: #a1a1a6; --line: #38383a; --back: #1c1c1e; --code: #2c2c2e; --link: #64a8ff; }
+  :root { --text: #f5f5f7; --muted: #a1a1a6; --line: #38383a; --back: #1c1c1e; --code: #2c2c2e; --link: #64a8ff;
+    --keyword: #ff7ab2; --type: #6bdfff; --string: #ff8170; --number: #d9c97c; --comment: #7f8c98; --annotation: #ffa14f; }
 }
+.keyword { color: var(--keyword); font-weight: 600; }
+.type { color: var(--type); }
+.string { color: var(--string); }
+.number { color: var(--number); }
+.comment { color: var(--comment); font-style: italic; }
+.annotation { color: var(--annotation); }
 * { box-sizing: border-box; }
 body { margin: 0; font: 16px/1.6 system-ui, sans-serif; color: var(--text); background: var(--back); }
 header { padding: 14px 24px; border-bottom: 1px solid var(--line); }

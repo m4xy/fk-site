@@ -1,0 +1,85 @@
+import uk.m4xy.html.*
+
+// fckt's code, coloured: each piece in a span whose class says what it is, keyword, type, string,
+// number, comment or annotation, which the site's stylesheet colours. What's code in another
+// language is left as text.
+module Highlights {
+  // The code's HTML, if it's fckt's, as a code block says: ```fckt, or ```kotlin, as fckt is
+  // written as Kotlin is.
+  highlighted(language: Option<String>, code: String): Option<Html> = when (language) {
+    Some(l) if l == "fckt" || l == "kotlin" -> Some(Fragment(pieces(code.toList(), [])))
+    else -> None
+  }
+
+  private pieces(cs: List<Char>, plain: List<Char>): List<Html> = when (cs) {
+    [] -> flushed(plain)
+    ['/', '/', *_] -> {
+      comment = cs.takeWhile { it != '\n' }
+      flushed(plain) + [span("comment", comment)] + pieces(cs.drop(comment.size), [])
+    }
+    ['/', '*', *rest] -> {
+      inside = closedBy(rest, ['*', '/'])
+      flushed(plain) + [span("comment", ['/', '*'] + inside)] + pieces(rest.drop(inside.size), [])
+    }
+    ['"', '"', '"', *rest] -> {
+      inside = closedBy(rest, ['"', '"', '"'])
+      flushed(plain) + [span("string", ['"', '"', '"'] + inside)] + pieces(
+        rest.drop(inside.size),
+        [],
+      )
+    }
+    [q, *rest] if q == '"' || q == '\'' -> {
+      inside = quoted(rest, q, [])
+      flushed(plain) + [span("string", [q] + inside)] + pieces(rest.drop(inside.size), [])
+    }
+    ['@', c, *_] if c.isLetter() -> {
+      name = ['@'] + cs.drop(1).takeWhile { isNamePart(it) }
+      flushed(plain) + [span("annotation", name)] + pieces(cs.drop(name.size), [])
+    }
+    [c, *_] if c.isDigit() && !plain.lastOrNone().map { isNamePart(it) }.getOrElse(false) -> {
+      number = cs.takeWhile { it.isLetterOrDigit() || it == '.' || it == '_' }
+      flushed(plain) + [span("number", number)] + pieces(cs.drop(number.size), [])
+    }
+    [c, *_] if (c.isLetter() || c == '_') && !plain.lastOrNone().map { isNamePart(it) }.getOrElse(false) -> {
+      name = cs.takeWhile { isNamePart(it) }
+      word = text(name)
+      kind = if (keywords.contains(word)) Some("keyword")
+      else if (c.isUpperCase()) Some("type")
+      else None
+      when (kind) {
+        Some(k) -> flushed(plain) + [span(k, name)] + pieces(cs.drop(name.size), [])
+        None -> pieces(cs.drop(name.size), plain + name)
+      }
+    }
+    [c, *rest] -> pieces(rest, plain + [c])
+  }
+
+  // From after an opening, to and with the closing, or all of it if it's never closed.
+  private closedBy(cs: List<Char>, closing: List<Char>): List<Char> = when (cs) {
+    [] -> []
+    [c, *rest] -> if (cs.take(closing.size) == closing) closing else [c] + closedBy(rest, closing)
+  }
+
+  // A string's or a character's characters, from after its quote, to and with its closing one,
+  // escapes in it; or to the line's end, if it isn't closed.
+  private quoted(cs: List<Char>, q: Char, found: List<Char>): List<Char> = when (cs) {
+    [] -> found
+    ['\\', c, *rest] -> quoted(rest, q, found + ['\\', c])
+    ['\n', *_] -> found
+    [c, *rest] -> if (c == q) found + [c] else quoted(rest, q, found + [c])
+  }
+
+  private flushed(plain: List<Char>): List<Html> = if (plain.isEmpty()) [] else [Text(text(plain))]
+
+  private span(kind: String, cs: List<Char>): Html =
+    Element("span", [Attribute("class", Some(kind))], [Text(text(cs))])
+
+  private isNamePart(c: Char): Boolean = c.isLetterOrDigit() || c == '_'
+
+  private text(cs: List<Char>): String = cs.map { it.toString() }.joinToString("")
+
+  private keywords: List<String> = [
+    "type", "module", "private", "internal", "when", "if", "else", "is", "true", "false", "import",
+    "effect", "spec", "external", "var", "operator", "opaque", "annotation", "as",
+  ]
+}

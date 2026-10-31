@@ -14,7 +14,8 @@ then in the order their front matter's `order:` gives, then by title. A link goe
 the site: to a page by its Markdown, `guide/start.md`, or by its path without `.md`, from the
 site's root, `/guide/start`, or from the page, as VitePress writes them; to `#a-heading` on it, as
 each heading has an id as GitHub gives one; and to a file from the site's root, there or in
-`public`. Links are written from where each page is, so the site works wherever it's put, served
+`public`. fckt's code, in a block marked `fckt` or `kotlin`, is coloured: its keywords, types,
+strings, numbers, comments and annotations. Links are written from where each page is, so the site works wherever it's put, served
 or opened from its folder.
 
 `--serve` serves the site once it's made, with fk-http: each file at its path, read each time it's
